@@ -12,7 +12,7 @@ with open('gramatica.txt', 'r') as file:
         grammar[key] = productions
 
 
-word = 'abaab'
+word = 'ba'
 
 # Creating the matrix
 matrix = [list() for i in range(len(word))]
@@ -23,6 +23,10 @@ word = list(word)
 def filling_matrix(word, grammar, matrix, row):
     base = matrix[len(matrix) - 1]
     if (len(base) != 0):
+        if list(grammar.keys())[0] in base[0]:
+            print('Essa palavra faz parte da gramática!')
+        else:
+            print('Essa palavra não faz parte da gramática!')
         return matrix
 
     combinations = generate_combinations(word, row)
@@ -49,24 +53,38 @@ def filling_matrix(word, grammar, matrix, row):
                         w = ''.join(word)
                         concat = ''.join(k)
                         position = w.find(concat)
-                        verif += matrix[row-1][position]
+                        value = matrix[len(concat)-1][position]
+                        if len(value) > 1:
+                            verif = distribuction(value, verif)
+                        else:
+                            verif += matrix[len(concat)-1][position]
                     else:
                         no_termminal = verify_production(k, grammar)
                         if len(no_termminal) > 1:
                             prods = verify_production(no_termminal, grammar)
                             verif += prods
                         else:
-                            verif += no_termminal
+                            if len(verif) > 1:
+                                verif = distribuction(verif, no_termminal)
+                            elif len(no_termminal) > 1:
+                                verif = distribuction(no_termminal, verif)
+                            else:
+                                verif += no_termminal
                 if len(verif) > 2:
                     result += verify_production(verif[:2], grammar)
                     result += verify_production(verif[2:], grammar)
                 else:
                     result += verify_production(verif, grammar)
                 calc.append(result)
+                result = ''
             found = False
             for c in calc:
                 if ''.join(grammar.keys()) in c:
                     matrix[row].append(c)
+                    found = True
+                    break
+                elif ''.join(grammar.keys()) in c[::-1]:
+                    matrix[row].append(c[::-1])
                     found = True
                     break
             if not found:
@@ -113,6 +131,13 @@ def generate_combinations(w, row):
         except:
             pass
     return combinations
+
+
+def distribuction(ve, node):
+    dist = ''
+    for i in ve:
+        dist += i + node
+    return dist
 
 
 result = filling_matrix(word, grammar, matrix, 0)
