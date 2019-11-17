@@ -1,5 +1,5 @@
 from re import findall
-from math import floor
+from math import floor, ceil
 
 grammar = dict()
 
@@ -12,7 +12,7 @@ with open('gramatica.txt', 'r') as file:
         grammar[key] = productions
 
 
-word = 'ba'
+word = '0100111110'
 
 # Creating the matrix
 matrix = [list() for i in range(len(word))]
@@ -30,72 +30,47 @@ def filling_matrix(word, grammar, matrix, row):
         return matrix
 
     combinations = generate_combinations(word, row)
-    if len(combinations[0]) >= 3:
-        t = floor(len(combinations[0]) / 2)
-        if t % 2 == 1:
-            for i, comb in enumerate(combinations):
-                combinations[i] = [[comb[:t], comb[t:]],
-                                   [comb[:len(comb)-t], comb[len(comb)-1:]]]
-        else:
-            for i, comb in enumerate(combinations):
-                combinations[i] = [[comb[0:1], comb[1:]],
-                                   [comb[:t], comb[t:]],
-                                   [comb[:len(comb)-1], [comb[-1]]]]
+    if len(combinations[0]) > 2:
+        for i, comb in enumerate(combinations):
+            combinations[i] = []
+            for j in range(len(comb) - 1):
+                combinations[i].append([comb[:j+1], comb[j+1:]])
 
     for comb in combinations:
         if type(comb[0]) is list:
             calc = list()
             result = ''
             for j in comb:
-                verif = ''
+                verif = []
                 for k in j:
                     if len(k) > 1:
                         w = ''.join(word)
                         concat = ''.join(k)
                         position = w.find(concat)
-                        value = matrix[len(concat)-1][position]
-                        if len(value) > 1:
-                            verif = distribuction(value, verif)
-                        else:
-                            verif += matrix[len(concat)-1][position]
+                        no_termminal = matrix[len(concat)-1][position]
+                        verif.append(no_termminal)
                     else:
                         no_termminal = verify_production(k, grammar)
-                        if len(no_termminal) > 1:
-                            prods = verify_production(no_termminal, grammar)
-                            verif += prods
-                        else:
-                            if len(verif) > 1:
-                                verif = distribuction(verif, no_termminal)
-                            elif len(no_termminal) > 1:
-                                verif = distribuction(no_termminal, verif)
-                            else:
-                                verif += no_termminal
-                if len(verif) > 2:
-                    result += verify_production(verif[:2], grammar)
-                    result += verify_production(verif[2:], grammar)
-                else:
-                    result += verify_production(verif, grammar)
+                        verif.append(no_termminal)
+                verif = distribuction(verif[0], verif[1])
+                result = verify_production(verif, grammar)
                 calc.append(result)
                 result = ''
-            found = False
+            found = ''
             for c in calc:
-                if ''.join(grammar.keys()) in c:
-                    matrix[row].append(c)
-                    found = True
-                    break
-                elif ''.join(grammar.keys()) in c[::-1]:
-                    matrix[row].append(c[::-1])
-                    found = True
-                    break
-            if not found:
-                for c in calc:
-                    if c in grammar.keys():
-                        matrix[row].append(c)
+                found += c
+            matrix[row].append(found)
         else:
+            verif = ''
             no_termminal = verify_production(comb, grammar)
             if len(no_termminal) > 1:
-                prods = verify_production(no_termminal, grammar)
-                matrix[row].append(prods)
+                verif = distribuction(no_termminal[:ceil(
+                    len(no_termminal)/2)], no_termminal[ceil(len(no_termminal)/2):])
+                verif = list(dict.fromkeys(verif))
+                result = verify_production(verif, grammar)
+                if result == '':
+                    result = no_termminal
+                matrix[row].append(result)
             else:
                 matrix[row].append(no_termminal)
 
@@ -134,9 +109,10 @@ def generate_combinations(w, row):
 
 
 def distribuction(ve, node):
-    dist = ''
+    dist = []
     for i in ve:
-        dist += i + node
+        for n in node:
+            dist.append(f'{i}{n}')
     return dist
 
 
