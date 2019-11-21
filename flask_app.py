@@ -8,6 +8,12 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
+@app.route('/', methods=['GET', 'POST'])
+@cross_origin()
+def hello():
+    return "App rodando!"
+
+
 @app.route('/api/cykParser', methods=['POST'])
 @cross_origin()
 def question():
@@ -23,7 +29,4 @@ def question():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
-
-app.run(host='127.0.0.1', port=8000, debug=True)
+    app.run(host='127.0.0.1', port=8000, debug=True)
